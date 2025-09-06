@@ -1,0 +1,5 @@
+# Example users CSV for backup_nextcloud_user_webdav.sh
+# Format: username,app_password
+# Lines starting with '#' are ignored
+user1,ABCD-1234-EXAMPLE-KEY
+user2,EFGH-5678-EXAMPLE-KEY

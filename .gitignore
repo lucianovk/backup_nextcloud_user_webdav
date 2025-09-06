@@ -1,0 +1,10 @@
+# Não versionar segredos
+backup_nextcloud_user_webdav.env
+backup_nextcloud_user_webdav.csv
+
+
+# Estado local do script
+.state/
+
+# Artefatos opcionais
+*.sha256
