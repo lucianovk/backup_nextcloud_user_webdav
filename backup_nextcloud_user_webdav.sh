@@ -299,7 +299,8 @@ EOF
 }
 
 # Process CSV (user,app_password)
-while IFS=, read -r csv_user csv_pass _rest; do
+# Be robust to files without a trailing newline (process last line too)
+while IFS=, read -r csv_user csv_pass _rest || [[ -n "$csv_user" || -n "$csv_pass" ]]; do
   csv_user="$(printf "%s" "$csv_user" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
   csv_pass="$(printf "%s" "$csv_pass" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
   [[ -z "$csv_user" ]] && continue
@@ -322,7 +323,7 @@ if [[ "$ok_count" -gt 0 && "$fail_count" -eq 0 ]]; then
   # Total success: report free space, start/end and duration
   # Free space on target
   DISK_FREE="$(df -h --output=avail,target "$USB_MOUNT_POINT" | tail -1 | awk '{print $1}')"
-  SUMMARY_LINES="$(cat "$SUMMARY_FILE")"
+  SUMMARY_LINES_TABLE="$(awk -F'\t' 'BEGIN{printf("User\tSize\tStatus\n")} {printf("%s\t%s\t%s\n",$1,$2,$3)}' "$SUMMARY_FILE" | column -t -s$'\t')"
   notify "Backup COMPLETED SUCCESSFULLY.
 Start: ${START_HUMAN}
 End:   ${END_HUMAN}
@@ -330,7 +331,7 @@ Duration: ${DURATION_FMT}
 Free space at ${USB_MOUNT_POINT}: ${DISK_FREE}
 Users processed: ${ok_count}
 Details:
-$(echo "$SUMMARY_LINES" | sed 's/^/ - /')"
+$(echo "$SUMMARY_LINES_TABLE" | sed 's/^/ - /')"
   echo "OK: total success. Duration ${DURATION_FMT}. Free ${DISK_FREE}."
   # record \"last success\"
   record_success_now
@@ -344,13 +345,13 @@ else
   FAILED_LIST="$(tr '\n' ' ' < "$FAILED_FILE" | sed 's/[[:space:]]\{1,\}$//')"
   DAYS="$(days_since_last_success)"
   [[ -z "$FAILED_LIST" ]] && FAILED_LIST="unknown"
-  SUMMARY_LINES="$(awk -F'\t' 'BEGIN{printf("Usuario\tTamanho\tStatus\n")} {printf("%s\t%s\t%s\n",$1,$2,$3)}' "$SUMMARY_FILE")"
+  SUMMARY_LINES_TABLE="$(awk -F'\t' 'BEGIN{printf("User\tSize\tStatus\n")} {printf("%s\t%s\t%s\n",$1,$2,$3)}' "$SUMMARY_FILE" | column -t -s$'\t')"
   notify "Backup NOT SUCCESSFUL for all users.
 Start: ${START_HUMAN}
 End:   ${END_HUMAN}
 Users failed: ${FAILED_LIST}
 Last success: ${DAYS} day(s) ago
 Details:
-$(echo "$SUMMARY_LINES" | column -t -s$'\t' | sed 's/^/ - /')"
+$(echo "$SUMMARY_LINES_TABLE" | sed 's/^/ - /')"
   echo "NOK: failures detected. Last success: ${DAYS} day(s) ago."
 fi
