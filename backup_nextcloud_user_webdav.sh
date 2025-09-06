@@ -344,13 +344,13 @@ else
   FAILED_LIST="$(tr '\n' ' ' < "$FAILED_FILE" | sed 's/[[:space:]]\{1,\}$//')"
   DAYS="$(days_since_last_success)"
   [[ -z "$FAILED_LIST" ]] && FAILED_LIST="unknown"
-  SUMMARY_LINES="$(cat "$SUMMARY_FILE")"
+  SUMMARY_LINES="$(awk -F'\t' 'BEGIN{printf("Usuario\tTamanho\tStatus\n")} {printf("%s\t%s\t%s\n",$1,$2,$3)}' "$SUMMARY_FILE")"
   notify "Backup NOT SUCCESSFUL for all users.
 Start: ${START_HUMAN}
 End:   ${END_HUMAN}
 Users failed: ${FAILED_LIST}
 Last success: ${DAYS} day(s) ago
 Details:
-$(echo "$SUMMARY_LINES" | sed 's/^/ - /')"
+$(echo "$SUMMARY_LINES" | column -t -s$'\t' | sed 's/^/ - /')"
   echo "NOK: failures detected. Last success: ${DAYS} day(s) ago."
 fi
